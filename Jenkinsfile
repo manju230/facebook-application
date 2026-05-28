@@ -5,17 +5,34 @@ pipeline {
         AWS_REGION = 'us-east-1'
         ECR_REPO   = 'facebook-application'
         ACCOUNT_ID = '848004113365'
-        IMAGE_TAG  = "${BUILD_NUMBER}"   // Better than 'latest'
+        IMAGE_TAG  = "${BUILD_NUMBER}"
         IMAGE_URI  = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"
     }
 
     stages {
 
+        // ✅ Clean workspace (prevents issues from previous builds)
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
         stage('Checkout') {
             steps {
-                git branch: 'main',
+                git branch: 'develop',   // ✅ FIX: match your GitHub branch
                     url: 'https://github.com/manju230/facebook-application.git'
-                // remove credentialsId if repo is public or using IAM role
+            }
+        }
+
+        stage('Verify Files') {
+            steps {
+                sh '''
+                echo "Current directory:"
+                pwd
+                echo "Files in workspace:"
+                ls -l
+                '''
             }
         }
 
@@ -28,16 +45,13 @@ pipeline {
             }
         }
 
-        // ✅ FIXED HERE (removed wrong dir block)
         stage('Build Docker Image') {
             steps {
                 sh """
-                docker build -t ${IMAGE_URI} .
+                docker build --no-cache -t ${IMAGE_URI} .
                 """
             }
         }
-
-        // ✅ Tag stage removed (combined into build)
 
         stage('Push to ECR') {
             steps {
