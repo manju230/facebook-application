@@ -30,6 +30,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
+dir('facebook-app')
                 script {
                     sh "docker build -t ${ECR_REPO}:${IMAGE_TAG} ."
                 }
